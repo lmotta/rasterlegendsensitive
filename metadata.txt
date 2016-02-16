@@ -1,0 +1,23 @@
+[general]
+name=Raster legend sensitive
+description=Change the legend of raster(need have palette) by extent of map and show/hide each item in legend.
+about=This plugin, show only in legend of raster, need have palette, the classes that inside map extent, and show and hide the classes of legend in the map.
+  This plugin is developed on the demand of IBAMA(Brazilian Institute of Environment and Renewable Natural Resources)
+  http://www.ibama.gov.br
+  See the presentations:
+  - http://pt.slideshare.net/LuizMotta3/presentation-2015-0701ibamaplugins
+version=0.1
+qgisMinimumVersion=2.12
+category=Raster
+author=Luiz Motta
+email=motta.luiz@gmail.com
+changelog=0.1 (2016-02-15)
+  - Start of plugin
+
+tags=raster, palette, IBAMA
+homepage=https://github.com/lmotta/rasterlegendsensitive
+tracker=http://hub.qgis.org/projects/rasterlegendsensitive
+repository=https://github.com/lmotta/rasterlegendsensitive
+icon=rasterlegendsensitive.svg
+experimental=True
+deprecated=False
