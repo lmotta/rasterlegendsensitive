@@ -27,7 +27,7 @@ from PyQt4.QtGui import (
      QMessageBox, QApplication
 )
 
-from qgis.core  import QgsRasterTransparency, QgsMapLayerRegistry, QgsMapLayer
+from qgis.core import QgsRasterTransparency, QgsMapLayerRegistry, QgsMapLayer
 from qgis.gui  import QgsMessageBar
 
 class TreeLegend(QObject):
@@ -373,20 +373,25 @@ class RasterLegendSensitive(QObject):
     self.tree.setEnabled( isEnabled )
     #
     if isEnabled:
-      if self.layer is None:
-        self.selectLayer( self.iface.activeLayer() )
-        if not self.layer is None:
-          self.changeSensitiveLegend()
+      activeLayer = self.iface.activeLayer()
+      if activeLayer is None and self.layer is None:
+        return
+      #
+      if activeLayer is None and not self.layer is None:
+        self.unselectLayer()
+        return
+      #
+      if activeLayer == self.layer:
+        self.changeSensitiveLegend()
+        return
+      #
+      if self.selectLayer( activeLayer ):
+        self.changeSensitiveLegend()
       else:
-        layers = self.legend.layers()
-        if not self.layer in layers:
-          if len( layers ) > 0:
-            self.unselectLayer( self.layer.id() )
-          else:
-            self.unselectLayer()
-        else:
-          self.changeSensitiveLegend()
-
+        self.layer = None
+        self.tree.setHeader()
+        self.tree.layer = None
+  
   @pyqtSlot(list)
   def finishedWorker(self, values):
     self.thread.quit()
@@ -457,7 +462,7 @@ class RasterLegendSensitive(QObject):
         self.valuesFullExtent = None
 
     if self.layer == layer or self.thread.isRunning():
-      return
+      return False
 
     if not layer is None and layer.type() ==  QgsMapLayer.RasterLayer:
       legendItems = layer.legendSymbologyItems()
@@ -469,7 +474,10 @@ class RasterLegendSensitive(QObject):
         setValuesFullExtent()
         ( self.layer, self.transparencyLayer ) = ( layer, layer.renderer().rasterTransparency() )
         self.changeSensitiveLegend()
-        self.msgBar.popWidget()
+        #
+        return True
+    #
+    return False
 
   @pyqtSlot( str )
   def unselectLayer(self, idLayer=None):
