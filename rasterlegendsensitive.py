@@ -293,6 +293,7 @@ class RasterLegendSensitive(QObject):
     #
     self.layer = self.worker = self.thread = self.transparencyLayer = None
     self.valuesFullExtent = self.hasConnect = self.hasConnectTree = None
+    self.iface = iface
     self.legend = iface.legendInterface()
     self.canvas = iface.mapCanvas()
     self.msgBar = iface.messageBar()
@@ -370,15 +371,21 @@ class RasterLegendSensitive(QObject):
     self._connect( isEnabled )
     self._connectTree( isEnabled )
     self.tree.setEnabled( isEnabled )
-    if isEnabled and not self.layer is None:
-      layers = self.legend.layers()
-      if not self.layer in layers:
-        if len( layers ) > 0:
-          self.unselectLayer( self.layer.id() )
-        else:
-          self.unselectLayer()
+    #
+    if isEnabled:
+      if self.layer is None:
+        self.selectLayer( self.iface.activeLayer() )
+        if not self.layer is None:
+          self.changeSensitiveLegend()
       else:
-        self.changeSensitiveLegend()
+        layers = self.legend.layers()
+        if not self.layer in layers:
+          if len( layers ) > 0:
+            self.unselectLayer( self.layer.id() )
+          else:
+            self.unselectLayer()
+        else:
+          self.changeSensitiveLegend()
 
   @pyqtSlot(list)
   def finishedWorker(self, values):
@@ -548,10 +555,10 @@ class DockWidgetRasterLegendSensitive(QDockWidget):
     setupUi()
     self.rls = RasterLegendSensitive( iface, self.tree )
     #
-    self.rlsEnabled = True
-    self.ckEnabled.setCheckState( Qt.Checked )
-    #
     self.ckEnabled.stateChanged.connect( self.enabled )
+    self.rlsEnabled = True
+    self.ckEnabled.setCheckState( Qt.Unchecked )
+    self.enabled( Qt.Unchecked )
 
   def __del__(self):
     del self.rls
