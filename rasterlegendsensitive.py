@@ -292,7 +292,8 @@ class RasterLegendSensitive(QObject):
     self.tree = TreeLegend( treeView )
     #
     self.layer = self.worker = self.thread = self.transparencyLayer = None
-    self.valuesFullExtent = self.hasConnect = self.hasConnectTree = None
+    self.isExtentLayer = self.valuesFullExtent = None
+    self.hasConnect = self.hasConnectTree = None
     self.iface = iface
     self.legend = iface.legendInterface()
     self.canvas = iface.mapCanvas()
@@ -341,7 +342,7 @@ class RasterLegendSensitive(QObject):
   def _connect(self, isConnect = True):
     ss = [
       { 'signal': self.legend.currentLayerChanged, 'slot': self.selectLayer },
-      { 'signal': QgsMapLayerRegistry.instance().layerWillBeRemoved, 'slot': self.unselectLayer },
+      { 'signal': QgsMapLayerRegistry.instance().layerWillBeRemoved, 'slot': self.removeLayer },
       { 'signal': self.canvas.extentsChanged, 'slot': self.changeSensitiveLegend }
     ]
     if isConnect:
@@ -367,6 +368,13 @@ class RasterLegendSensitive(QObject):
       for item in ss:
         item['signal'].disconnect( item['slot'] )
 
+  def _resetLayer(self):
+    if self.thread.isRunning():
+      self.worker.isKilled = True
+    self.layer = None
+    self.tree.setHeader()
+    self.tree.layer = None
+
   def setEnabled(self, isEnabled=True):
     self._connect( isEnabled )
     self._connectTree( isEnabled )
@@ -374,32 +382,22 @@ class RasterLegendSensitive(QObject):
     #
     if isEnabled:
       activeLayer = self.iface.activeLayer()
-      if activeLayer is None and self.layer is None:
-        return
-      #
-      if activeLayer is None and not self.layer is None:
-        self.unselectLayer()
-        return
       #
       if activeLayer == self.layer:
+        if activeLayer is None:
+          return
         self.changeSensitiveLegend()
-        return
       #
-      if self.selectLayer( activeLayer ):
-        self.changeSensitiveLegend()
-      else:
-        self.layer = None
-        self.tree.setHeader()
-        self.tree.layer = None
+      self.selectLayer( activeLayer )
   
   @pyqtSlot(list)
   def finishedWorker(self, values):
     self.thread.quit()
     self.msgBar.popWidget()
     if not self.worker.isKilled: 
-      if len( values ) > 0: # Never Happing...
+      if len( values ) > 0: # Never Happing otherwise...
         self.tree.setLegend( values )
-        if self.valuesFullExtent is None:
+        if self.isExtentLayer:
           self.valuesFullExtent = values
     else: # When PAN/ZOOM/...
       self.thread.wait()
@@ -456,39 +454,31 @@ class RasterLegendSensitive(QObject):
 
   @pyqtSlot( 'QgsMapLayer' )
   def selectLayer(self, layer):
-    def setValuesFullExtent():
-      if not self.valuesFullExtent is None:
+    def processLegend():
+      self.tree.setLayer( layer )
+      if not self.valuesFullExtent is None: # Save legend with all extent layer
         del self.valuesFullExtent[:]
         self.valuesFullExtent = None
+      ( self.layer, self.transparencyLayer ) = ( layer, layer.renderer().rasterTransparency() )
+      self.worker.setLegendReadBlock( layer )
+      self.changeSensitiveLegend()
 
-    if self.layer == layer or self.thread.isRunning():
-      return False
+    if not self.layer is None:
+      self._resetLayer()
 
     if not layer is None and layer.type() ==  QgsMapLayer.RasterLayer:
       legendItems = layer.legendSymbologyItems()
       total = len( legendItems )
       if total > 0: # Had a classification
         self.msgBar.pushMessage( self.nameModulus, "Starting legend...", QgsMessageBar.INFO)
-        self.worker.setLegendReadBlock( layer )
-        self.tree.setLayer( layer )
-        setValuesFullExtent()
-        ( self.layer, self.transparencyLayer ) = ( layer, layer.renderer().rasterTransparency() )
-        self.changeSensitiveLegend()
-        #
-        return True
-    #
-    return False
+        processLegend()
 
   @pyqtSlot( str )
-  def unselectLayer(self, idLayer=None):
-    if idLayer is None or ( not self.layer is None and self.layer.id() == idLayer ):
-      if self.thread.isRunning():
-        self.worker.isKilled = True
+  def removeLayer(self, idLayer):
+    if not self.layer is None and self.layer.id() == idLayer:
       msg = "Layer '%s' was removed" % self.tree.getLayerName()
       self.msgBar.pushMessage( self.nameModulus, msg, QgsMessageBar.WARNING, 5)
-      self.layer = None
-      self.tree.setHeader()
-      self.tree.layer = None
+      self._resetLayer()
 
   @pyqtSlot()
   def changeSensitiveLegend(self):
@@ -517,12 +507,14 @@ class RasterLegendSensitive(QObject):
       return
     
     if extentCanvas == extentLayer or extentCanvas.contains( extentLayer):
+      self.isExtentLayer = True
       if not self.valuesFullExtent is None:
         self.tree.setLegend( self.valuesFullExtent )
         return
       extent = extentLayer
       delta = 0
     else:
+      self.isExtentLayer = False
       extent = extentCanvas.intersect( extentLayer )
       delta = 1
 
