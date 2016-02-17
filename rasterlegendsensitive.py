@@ -524,7 +524,6 @@ class RasterLegendSensitive(QObject):
     widthRead  = int( extent.width()  / resX ) + delta
     heightRead = int( extent.height() / resY ) + delta
 
-    self.msgBar.pushMessage( self.nameModulus, "Starting legend...", QgsMessageBar.INFO)
     self.worker.setProcessImage( extent, widthRead, heightRead )
     self.thread.start()
     #self.worker.run() # DEBUG
