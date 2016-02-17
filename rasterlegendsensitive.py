@@ -34,7 +34,7 @@ class TreeLegend(QObject):
 
   toggledLegend = pyqtSignal(  list )
   descriptionLegend = pyqtSignal(  str )
-  
+
   def __init__(self, treeView):
     def init():
       self.setHeader()
@@ -311,7 +311,7 @@ class RasterLegendSensitive(QObject):
     if not self.hasConnect:
       self._connect( False )
     if not self.layer is None:
-      self.transparencyLayer.setTransparentSingleValuePixelList( [] )
+      self.setTransparenceLayer( [] )
 
   def initThread(self):
     self.thread = QThread( self )
@@ -372,6 +372,7 @@ class RasterLegendSensitive(QObject):
   def _resetLayer(self):
     if self.thread.isRunning():
       self.worker.isKilled = True
+    self.setTransparenceLayer( [] )
     self.layer = None
     self.tree.setHeader()
     self.tree.layer = None
