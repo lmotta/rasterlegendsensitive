@@ -505,7 +505,7 @@ class RasterLegendSensitive(QObject):
 
     if not extentCanvas.intersects( extentLayer ):
       self.msgBar.popWidget()
-      self.msgBar.pushMessage( self.nameModulus, "View not intersects Raster '%s'" % self.layer.name, QgsMessageBar.WARNING, 5)
+      self.msgBar.pushMessage( self.nameModulus, "View not intersects Raster '%s'" % self.layer.name(), QgsMessageBar.WARNING, 5)
       self.tree.setLegend( [] )
       return
     
