@@ -287,9 +287,10 @@ class WorkerRasterLegendSensitive(QObject):
     self.finished.emit( values )
 
 class RasterLegendSensitive(QObject):
-  def __init__(self, iface, treeView):
+  def __init__(self, iface, treeView, ckEnabled):
     super(RasterLegendSensitive, self).__init__()
     self.tree = TreeLegend( treeView )
+    self.ckEnabled = ckEnabled
     #
     self.layer = self.worker = self.thread = self.transparencyLayer = None
     self.isExtentLayer = self.valuesFullExtent = None
@@ -376,20 +377,22 @@ class RasterLegendSensitive(QObject):
     self.tree.layer = None
 
   def setEnabled(self, isEnabled=True):
+    if not isEnabled and self.thread.isRunning():
+      self.worker.isKilled = True
+    #
     self._connect( isEnabled )
     self._connectTree( isEnabled )
     self.tree.setEnabled( isEnabled )
     #
     if isEnabled:
       activeLayer = self.iface.activeLayer()
-      #
       if activeLayer == self.layer:
         if activeLayer is None:
           return
         self.changeSensitiveLegend()
-      #
-      self.selectLayer( activeLayer )
-  
+      else: 
+        self.selectLayer( activeLayer )
+      
   @pyqtSlot(list)
   def finishedWorker(self, values):
     self.thread.quit()
@@ -401,7 +404,8 @@ class RasterLegendSensitive(QObject):
           self.valuesFullExtent = values
     else: # When PAN/ZOOM/...
       self.thread.wait()
-      self.changeSensitiveLegend()
+      if self.ckEnabled.checkState() == Qt.Checked:
+        self.changeSensitiveLegend()
 
   @pyqtSlot( str )
   def messageStatusWorker(self, msg):
@@ -470,7 +474,6 @@ class RasterLegendSensitive(QObject):
       legendItems = layer.legendSymbologyItems()
       total = len( legendItems )
       if total > 0: # Had a classification
-        self.msgBar.pushMessage( self.nameModulus, "Starting legend...", QgsMessageBar.INFO)
         processLegend()
 
   @pyqtSlot( str )
@@ -521,6 +524,7 @@ class RasterLegendSensitive(QObject):
     widthRead  = int( extent.width()  / resX ) + delta
     heightRead = int( extent.height() / resY ) + delta
 
+    self.msgBar.pushMessage( self.nameModulus, "Starting legend...", QgsMessageBar.INFO)
     self.worker.setProcessImage( extent, widthRead, heightRead )
     self.thread.start()
     #self.worker.run() # DEBUG
@@ -553,7 +557,7 @@ class DockWidgetRasterLegendSensitive(QDockWidget):
     #
     self.tree = self.ckEnabled = None
     setupUi()
-    self.rls = RasterLegendSensitive( iface, self.tree )
+    self.rls = RasterLegendSensitive( iface, self.tree, self.ckEnabled )
     #
     self.ckEnabled.stateChanged.connect( self.enabled )
     self.rlsEnabled = True
