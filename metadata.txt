@@ -5,7 +5,7 @@ about=This plugin, show only in legend of raster, need have palette, the classes
   This plugin is developed on the demand of IBAMA(Brazilian Institute of Environment and Renewable Natural Resources)
   http://www.ibama.gov.br
   See the presentations:
-  - http://pt.slideshare.net/LuizMotta3/qgis-ibama-rasterlegendsensitive
+  - http://pt.slideshare.net/LuizMotta3/qgis-ibama-rasterlegendsensitiv
 version=0.1
 qgisMinimumVersion=2.12
 category=Raster
@@ -16,7 +16,7 @@ changelog=0.1 (2016-02-15)
 
 tags=raster, palette, IBAMA
 homepage=https://github.com/lmotta/rasterlegendsensitive
-tracker=http://hub.qgis.org/projects/rasterlegendsensitive
+tracker=http://hub.qgis.org/projects/rasterlegendsensitiv
 repository=https://github.com/lmotta/rasterlegendsensitive
 icon=rasterlegendsensitive.svg
 experimental=True
