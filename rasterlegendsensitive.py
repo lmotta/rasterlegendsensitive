@@ -372,7 +372,6 @@ class RasterLegendSensitive(QObject):
   def _resetLayer(self):
     if self.thread.isRunning():
       self.worker.isKilled = True
-    self.setTransparenceLayer( [] )
     self.layer = None
     self.tree.setHeader()
     self.tree.layer = None
@@ -469,7 +468,11 @@ class RasterLegendSensitive(QObject):
       self.changeSensitiveLegend()
 
     if not self.layer is None:
-      self._resetLayer()
+      if not self.layer in self.legend.layers():
+        self.removeLayer( self.layer.id() )
+      else:
+        self.setTransparenceLayer( [] )
+        self._resetLayer()
 
     if not layer is None and layer.type() ==  QgsMapLayer.RasterLayer:
       legendItems = layer.legendSymbologyItems()
