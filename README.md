@@ -12,6 +12,8 @@ Change the legend of raster(need have palette) by extent of map and show/hide ea
 Luiz Motta
 
 ## Changelog
+- 2016-02-19 - Version 0.3
+Fix link to the presentation in the About broken (https://github.com/lmotta/rasterlegendsensitive/issues/1)
 - 2016-02-16 - Version 0.2
 Fixes when legend is actived and the layer was removed
 - 2016-02-15 - Version 0.1
