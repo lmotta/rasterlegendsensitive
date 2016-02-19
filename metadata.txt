@@ -6,7 +6,7 @@ about=This plugin, show only in legend of raster, need have palette, the classes
   http://www.ibama.gov.br
   See the presentations:
   - http://pt.slideshare.net/LuizMotta3/qgis-ibama-rasterlegendsensitive
-version=0.2
+version=0.3
 qgisMinimumVersion=2.12
 category=Raster
 author=Luiz Motta
